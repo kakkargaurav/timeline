@@ -26,6 +26,18 @@ body {
     color: white;
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-title {
+    flex: 1;
+}
+
 .header h1 {
     font-size: 2.5rem;
     margin-bottom: 10px;
@@ -35,6 +47,39 @@ body {
 .header p {
     font-size: 1.1rem;
     opacity: 0.9;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255,255,255,0.1);
+    padding: 10px 20px;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.welcome-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.logout-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-1px);
 }
 
 .stats {
@@ -637,3 +682,32 @@ body {
 .mt-20 { margin-top: 20px; }
 .mb-20 { margin-bottom: 20px; }
 .hidden { display: none; }
+/* Responsive Styles for Authentication */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-info {
+        order: -1;
+        margin-bottom: 20px;
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-info {
+        padding: 8px 15px;
+    }
+    
+    .welcome-text {
+        font-size: 0.8rem;
+    }
+    
+    .logout-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}

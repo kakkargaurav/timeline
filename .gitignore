@@ -1,0 +1,67 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database credentials
+config/database.local.php
+
+# Logs
+*.log
+logs/
+error.log
+access.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker volumes and data
+docker-data/
+mysql-data/
+volumes/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Node modules (if any frontend build tools are added)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# PHP specific
+vendor/
+composer.lock
+
+# Image uploads (optional - you may want to track these)
+# images/driveway/*.jpg
+# images/driveway/*.png
+# images/driveway/*.jpeg
+
+# Cache files
+cache/
+*.cache
+
+# Backup files
+*.bak
+*.backup
+*.sql.bak
+
+# Development files
+test-images/
+dev/

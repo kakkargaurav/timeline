@@ -1,3 +1,9 @@
+<?php
+require_once __DIR__ . '/classes/Auth.php';
+
+// Protect this page but allow API access
+Auth::protectWebPage();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,8 +17,16 @@
     <div class="container">
         <!-- Header Section -->
         <header class="header">
-            <h1>📷 Driveway Timeline</h1>
-            <p>Visual timeline of driveway images with timestamps and captions</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>📷 Driveway Timeline</h1>
+                    <p>Visual timeline of driveway images with timestamps and captions</p>
+                </div>
+                <div class="user-info">
+                    <span class="welcome-text">Welcome, <?php echo htmlspecialchars(Auth::getUsername()); ?>!</span>
+                    <a href="logout.php" class="logout-btn">🚪 Logout</a>
+                </div>
+            </div>
             
             <!-- Statistics -->
             <div id="stats" class="stats">

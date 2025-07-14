@@ -14,6 +14,8 @@ services:
       - DB_NAME=${DB_NAME:-timeline_db}
       - DB_USER=${DB_USER:-root}
       - DB_PASS=${DB_PASS:-password}
+      - APP_USER=${APP_USER:-testuser}
+      - APP_PASS=${APP_PASS:-password}
     depends_on:
       - mysql
     networks:

@@ -1,9 +1,14 @@
 <?php
 /**
  * API Testing Script
- * 
+ *
  * This script helps test the timeline API endpoints
  */
+
+require_once __DIR__ . '/classes/Auth.php';
+
+// Protect this page but allow API access
+Auth::protectWebPage();
 
 header('Content-Type: text/html; charset=UTF-8');
 ?>

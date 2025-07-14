@@ -3,6 +3,7 @@
 A PHP application that displays images stored in a folder with timestamps embedded in the filename, creating a beautiful vertical timeline with captions stored in a MySQL database.
 
 ## Features
+- 🔐 **Authentication System**: Basic login protection with environment variable credentials
 
 - 🖼️ **Automatic Image Discovery**: Scans `images/driveway/` folder for images with timestamp format
 - ⏰ **Timeline Display**: Beautiful vertical timeline with alternating left/right image layout
@@ -176,6 +177,52 @@ GET /api/captions.php?stats=1
 ### Adding Images
 1. Copy your images to the `images/driveway/` folder
 2. Ensure filenames follow the format: `driveway_YYYYMMDD_HHMMSS.ext`
+
+## 🔐 Authentication
+
+The application includes basic authentication to protect web interface access while keeping API endpoints open for third-party integrations.
+
+### Configuration
+
+Set authentication credentials via environment variables:
+
+```bash
+APP_USER=your_username
+APP_PASS=your_secure_password
+```
+
+### Default Credentials
+
+- **Username**: `admin`
+- **Password**: `password`
+
+### Protected Pages
+
+- Main timeline interface (`index.php`)
+- API testing interface (`test_api.php`)
+- Database fix utility (`fix_database.php`)
+
+### Public Access
+
+- All API endpoints (`/api/*`) remain publicly accessible
+- Login page (`login.php`)
+
+### Docker Configuration
+
+```bash
+docker run -p 8080:80 \
+  -e APP_USER=admin \
+  -e APP_PASS=secure_password \
+  timeline-app
+```
+
+### Security Features
+
+- Session-based authentication
+- CSRF token protection
+- Secure session management
+- Automatic redirect after login
+- Clean logout functionality
 3. Refresh the timeline to see new images
 
 ### Adding Captions via API
