@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  timeline-app:
+    build: .
+    container_name: timeline-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./images:/var/www/html/images
+      - ./config:/var/www/html/config
+    environment:
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_NAME=${DB_NAME:-timeline_db}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASS=${DB_PASS:-password}
+    depends_on:
+      - mysql
+    networks:
+      - timeline-network
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: timeline-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASS:-password}
+      - MYSQL_DATABASE=${DB_NAME:-timeline_db}
+      - MYSQL_USER=${DB_USER:-timeline_user}
+      - MYSQL_PASSWORD=${DB_PASS:-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - timeline-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  timeline-network:
+    driver: bridge
