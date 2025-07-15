@@ -11,30 +11,45 @@ class TimelineApp {
         this.searchResults = [];
         this.isSearchMode = false;
         this.searchTimeout = null;
+        this.currentFolder = null;
         this.init();
     }
 
     /**
      * Initialize the application
      */
-    async init() {
-        try {
-            await this.loadTimeline();
-            await this.loadStats();
-            this.setupEventListeners();
-        } catch (error) {
-            this.showError('Failed to initialize application: ' + error.message);
+    init() {
+        this.setupEventListeners();
+    }
+
+    /**
+     * Load timeline for a specific folder
+     */
+    async loadTimelineByFolder(folder) {
+        this.currentFolder = folder;
+        document.getElementById('folder-selection').style.display = 'none';
+        document.getElementById('timeline-section').style.display = 'block';
+
+        // Update header
+        const headerTitle = document.querySelector('.header-title h1');
+        if (headerTitle) {
+            headerTitle.textContent = `📷 ${folder.charAt(0).toUpperCase() + folder.slice(1)} Timeline`;
         }
+
+        await this.loadTimeline();
+        await this.loadStats();
     }
 
     /**
      * Load timeline data from server
      */
     async loadTimeline() {
+        if (!this.currentFolder) return;
+
         try {
             this.showLoading();
             
-            const response = await fetch('get_timeline.php');
+            const response = await fetch(`get_timeline.php?folder=${this.currentFolder}`);
             const result = await response.json();
             
             if (result.success) {
@@ -44,7 +59,7 @@ class TimelineApp {
                 throw new Error(result.error || 'Failed to load timeline');
             }
         } catch (error) {
-            this.showError('Failed to load timeline: ' + error.message);
+            this.showError(`Failed to load timeline for ${this.currentFolder}: ` + error.message);
         } finally {
             this.hideLoading();
         }
@@ -202,6 +217,16 @@ class TimelineApp {
      * Setup event listeners
      */
     setupEventListeners() {
+        // Folder links
+        const folderLinks = document.querySelectorAll('.folder-link');
+        folderLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const folder = link.dataset.folder;
+                this.loadTimelineByFolder(folder);
+            });
+        });
+
         // Refresh button
         const refreshBtn = document.getElementById('refresh-btn');
         if (refreshBtn) {
@@ -277,6 +302,7 @@ class TimelineApp {
                 <button onclick="timelineApp.loadTimeline()" style="margin-top: 10px; padding: 8px 16px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Try Again
                 </button>
+                <a href="/" class="back-link">Select another timeline</a>
             </div>
         `;
     }
@@ -289,11 +315,12 @@ class TimelineApp {
         timelineContainer.innerHTML = `
             <div class="empty-state">
                 <h3>No Images Found</h3>
-                <p>No images were found in the driveway folder.</p>
+                <p>No images were found in the selected folder.</p>
                 <p>Add some images with the format: driveway_YYYYMMDD_HHMMSS.jpg</p>
                 <button onclick="timelineApp.loadTimeline()" style="margin-top: 20px; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; cursor: pointer;">
                     Refresh
                 </button>
+                 <a href="/" class="back-link">Select another timeline</a>
             </div>
         `;
     }
@@ -558,7 +585,6 @@ class TimelineApp {
      */
     async refresh() {
         if (this.isSearchMode) {
-            // If in search mode, just refresh the search
             const searchInput = document.getElementById('search-input');
             if (searchInput && searchInput.value.trim()) {
                 this.performSearch();
@@ -567,8 +593,8 @@ class TimelineApp {
             }
         } else {
             await this.loadTimeline();
-            await this.loadStats();
         }
+        await this.loadStats();
     }
 }
 

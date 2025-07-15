@@ -12,10 +12,24 @@ class TimelineManager
     private $db;
     private $imagesPath;
 
-    public function __construct($imagesPath = 'images/driveway')
+    public function __construct($imagesPath = null)
     {
         $this->db = new Database();
-        $this->imagesPath = $imagesPath;
+        if ($imagesPath) {
+            $this->setImagePath($imagesPath);
+        }
+    }
+
+    /**
+     * Set the path for the images folder
+     */
+    public function setImagePath($path)
+    {
+        // Basic validation to prevent directory traversal
+        if (strpos($path, '..') !== false || !is_dir(__DIR__ . '/../' . $path)) {
+            throw new Exception("Invalid or non-existent images path provided.");
+        }
+        $this->imagesPath = $path;
     }
 
     /**
@@ -23,13 +37,14 @@ class TimelineManager
      */
     public function scanImages()
     {
+        if (!$this->imagesPath) {
+            return [];
+        }
+
         $images = [];
         $basePath = __DIR__ . '/../' . $this->imagesPath;
         
-        // Create directory if it doesn't exist
-        if (!is_dir($basePath)) {
-            mkdir($basePath, 0755, true);
-        }
+        // Directory existence is already checked in setImagePath
 
         // Scan for image files
         $files = glob($basePath . '/driveway_*.*');

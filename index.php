@@ -27,69 +27,53 @@ Auth::protectWebPage();
                     <a href="logout.php" class="logout-btn">🚪 Logout</a>
                 </div>
             </div>
-            
+        </header>
+
+        <!-- Folder Selection -->
+        <section id="folder-selection" class="folder-selection-container">
+            <h2>Select a Timeline</h2>
+            <div class="folder-list">
+                <?php
+                    $images_base_path = __DIR__ . '/images';
+                    if (is_dir($images_base_path)) {
+                        $folders = array_filter(glob($images_base_path . '/*'), 'is_dir');
+                        if (empty($folders)) {
+                            echo "<p>No timelines found. Create a folder inside the <code>images</code> directory.</p>";
+                        } else {
+                            foreach ($folders as $folder) {
+                                $folder_name = basename($folder);
+                                echo '<a href="#" class="folder-link" data-folder="' . htmlspecialchars($folder_name) . '">';
+                                echo '<span>📁</span> ' . htmlspecialchars(ucfirst($folder_name));
+                                echo '</a>';
+                            }
+                        }
+                    } else {
+                        echo "<p>The <code>images</code> directory does not exist.</p>";
+                    }
+                ?>
+            </div>
+        </section>
+
+        <!-- Timeline Container (initially hidden) -->
+        <main id="timeline-section" class="timeline-container" style="display: none;">
             <!-- Statistics -->
-            <div id="stats" class="stats">
-                <div class="stat-item">
-                    <span class="stat-number">-</span>
-                    <span class="stat-label">Loading...</span>
-                </div>
-            </div>
-            
+            <div id="stats" class="stats"></div>
+
             <!-- Search Interface -->
-            <div class="search-container">
-                <div class="search-form">
-                    <div class="search-suggestions">
-                        <input type="text" id="search-input" class="search-input" placeholder="Search captions..." autocomplete="off">
-                        <div id="suggestions-dropdown" class="suggestions-dropdown"></div>
-                    </div>
-                    <button id="search-btn" class="search-btn">
-                        🔍 Search
-                    </button>
-                    <button id="clear-search-btn" class="clear-btn">
-                        Clear
-                    </button>
-                </div>
-                
-                <div class="search-options">
-                    <label class="search-checkbox">
-                        <input type="checkbox" id="exact-match">
-                        Exact match
-                    </label>
-                    <label class="search-checkbox">
-                        <input type="checkbox" id="case-sensitive">
-                        Case sensitive
-                    </label>
-                </div>
-            </div>
+            <div class="search-container"></div>
 
             <!-- Action Buttons -->
-            <div class="actions" style="margin: 20px 0;">
-                <button id="refresh-btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                    🔄 Refresh Timeline
-                </button>
-            </div>
-        </header>
-        
-        <!-- Timeline Container -->
-        <main class="timeline-container">
+            <div class="actions"></div>
+
             <!-- Search Results Header -->
-            <div id="search-results-header" class="search-results-header" style="display: none;">
-                <!-- Will be populated by JavaScript -->
-            </div>
+            <div id="search-results-header" class="search-results-header" style="display: none;"></div>
             
-            <div id="timeline" class="timeline">
-                <!-- Timeline items will be dynamically loaded here -->
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading timeline...</p>
-                </div>
-            </div>
+            <div id="timeline" class="timeline"></div>
         </main>
         
         <!-- Footer -->
         <footer style="text-align: center; margin-top: 40px; padding: 20px; color: rgba(255,255,255,0.7);">
-            <p>Timeline Application • Images are read from <code>images/driveway/</code> folder</p>
+            <p>Timeline Application</p>
             <p style="font-size: 0.9rem; margin-top: 10px;">
                 Expected filename format: <code>driveway_YYYYMMDD_HHMMSS.ext</code>
             </p>
