@@ -7,9 +7,13 @@ class TimelineApp {
     constructor() {
         this.apiBaseUrl = 'api/captions.php';
         this.searchApiUrl = 'api/search.php';
+        this.timelineApiUrl = 'api/timeline.php';
         this.timelineData = [];
         this.searchResults = [];
+        this.availableDates = [];
         this.isSearchMode = false;
+        this.isDateFilterMode = false;
+        this.currentDateFilter = null;
         this.searchTimeout = null;
         this.init();
     }
@@ -19,9 +23,11 @@ class TimelineApp {
      */
     async init() {
         try {
+            await this.loadAvailableDates();
             await this.loadTimeline();
             await this.loadStats();
             this.setupEventListeners();
+            this.setupDateFilterListeners();
         } catch (error) {
             this.showError('Failed to initialize application: ' + error.message);
         }
@@ -153,52 +159,6 @@ class TimelineApp {
     }
 
     /**
-     * Save caption via API
-     */
-    async saveCaption(timestamp, text) {
-        try {
-            const response = await fetch(this.apiBaseUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ timestamp, text })
-            });
-            
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to save caption');
-            }
-            
-            return result;
-        } catch (error) {
-            throw new Error('Failed to save caption: ' + error.message);
-        }
-    }
-
-    /**
-     * Delete caption via API
-     */
-    async deleteCaption(timestamp) {
-        try {
-            const response = await fetch(this.apiBaseUrl + '?timestamp=' + encodeURIComponent(timestamp), {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to delete caption');
-            }
-            
-            return result;
-        } catch (error) {
-            throw new Error('Failed to delete caption: ' + error.message);
-        }
-    }
-
-    /**
      * Setup event listeners
      */
     setupEventListeners() {
@@ -309,20 +269,6 @@ class TimelineApp {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    /**
-     * Format timestamp for display
-     */
-    formatTimestamp(timestamp) {
-        const year = timestamp.substr(0, 4);
-        const month = timestamp.substr(4, 2);
-        const day = timestamp.substr(6, 2);
-        const hour = timestamp.substr(9, 2);
-        const minute = timestamp.substr(11, 2);
-        const second = timestamp.substr(13, 2);
-        
-        return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
     }
 
     /**
@@ -554,6 +500,261 @@ class TimelineApp {
     }
 
     /**
+     * Load available dates for filtering
+     */
+    async loadAvailableDates() {
+        try {
+            const response = await fetch(`${this.timelineApiUrl}?available_dates=1`);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.availableDates = result.data;
+                this.populateDateSelect();
+            }
+        } catch (error) {
+            console.warn('Failed to load available dates:', error);
+        }
+    }
+
+    /**
+     * Populate the date select dropdown
+     */
+    populateDateSelect() {
+        const dateSelect = document.getElementById('date-filter');
+        if (!dateSelect) return;
+        
+        // Clear existing options except "All Dates"
+        dateSelect.innerHTML = '<option value="">All Dates</option>';
+        
+        // Add available dates
+        this.availableDates.forEach(date => {
+            const option = document.createElement('option');
+            option.value = date;
+            option.textContent = this.formatDateForDisplay(date);
+            dateSelect.appendChild(option);
+        });
+    }
+
+    /**
+     * Format date for display (convert YYYY-MM-DD to readable format)
+     */
+    formatDateForDisplay(date) {
+        try {
+            const dateObj = new Date(date + 'T00:00:00');
+            return dateObj.toLocaleDateString('en-AU', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return date;
+        }
+    }
+
+    /**
+     * Filter timeline by specific date
+     */
+    async filterByDate(date) {
+        try {
+            this.showLoading();
+            this.isDateFilterMode = true;
+            this.currentDateFilter = date;
+            
+            let url = this.timelineApiUrl;
+            if (date) {
+                url += `?date=${encodeURIComponent(date)}`;
+            }
+            
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.timelineData = result.data;
+                this.renderTimeline();
+                this.updateDateFilterIndicator(date);
+            } else {
+                throw new Error(result.error || 'Failed to filter timeline');
+            }
+        } catch (error) {
+            this.showError('Failed to filter timeline: ' + error.message);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    /**
+     * Filter timeline by date range
+     */
+    async filterByDateRange(dateFrom, dateTo) {
+        try {
+            this.showLoading();
+            this.isDateFilterMode = true;
+            
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('date_from', dateFrom);
+            if (dateTo) params.append('date_to', dateTo);
+            
+            const response = await fetch(`${this.timelineApiUrl}?${params}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.timelineData = result.data;
+                this.renderTimeline();
+                this.updateDateRangeIndicator(dateFrom, dateTo);
+            } else {
+                throw new Error(result.error || 'Failed to filter timeline');
+            }
+        } catch (error) {
+            this.showError('Failed to filter timeline: ' + error.message);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    /**
+     * Update date filter indicator
+     */
+    updateDateFilterIndicator(date) {
+        let indicator = document.getElementById('date-filter-indicator');
+        
+        if (date) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'date-filter-indicator';
+                indicator.className = 'date-filter-indicator';
+                
+                const searchContainer = document.querySelector('.search-container');
+                searchContainer.appendChild(indicator);
+            }
+            
+            indicator.innerHTML = `
+                📅 Filtered by: ${this.formatDateForDisplay(date)}
+                <button class="clear-date-filter" onclick="timelineApp.clearDateFilter()">✕</button>
+            `;
+        } else {
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+    }
+
+    /**
+     * Update date range filter indicator
+     */
+    updateDateRangeIndicator(dateFrom, dateTo) {
+        let indicator = document.getElementById('date-filter-indicator');
+        
+        if (dateFrom || dateTo) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'date-filter-indicator';
+                indicator.className = 'date-filter-indicator';
+                
+                const searchContainer = document.querySelector('.search-container');
+                searchContainer.appendChild(indicator);
+            }
+            
+            let text = '📅 Date Range: ';
+            if (dateFrom && dateTo) {
+                text += `${this.formatDateForDisplay(dateFrom)} to ${this.formatDateForDisplay(dateTo)}`;
+            } else if (dateFrom) {
+                text += `From ${this.formatDateForDisplay(dateFrom)}`;
+            } else if (dateTo) {
+                text += `Until ${this.formatDateForDisplay(dateTo)}`;
+            }
+            
+            indicator.innerHTML = `
+                ${text}
+                <button class="clear-date-filter" onclick="timelineApp.clearDateFilter()">✕</button>
+            `;
+        } else {
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+    }
+
+    /**
+     * Clear date filter and show all timeline
+     */
+    clearDateFilter() {
+        this.isDateFilterMode = false;
+        this.currentDateFilter = null;
+        
+        // Reset date controls
+        const dateSelect = document.getElementById('date-filter');
+        const dateFrom = document.getElementById('date-from');
+        const dateTo = document.getElementById('date-to');
+        
+        if (dateSelect) dateSelect.value = '';
+        if (dateFrom) dateFrom.value = '';
+        if (dateTo) dateTo.value = '';
+        
+        // Remove indicator
+        this.updateDateFilterIndicator(null);
+        
+        // Reload full timeline
+        this.loadTimeline();
+    }
+
+    /**
+     * Setup date filter event listeners
+     */
+    setupDateFilterListeners() {
+        const dateSelect = document.getElementById('date-filter');
+        const dateFrom = document.getElementById('date-from');
+        const dateTo = document.getElementById('date-to');
+        const applyRangeBtn = document.getElementById('apply-date-range');
+        
+        if (dateSelect) {
+            dateSelect.addEventListener('change', (e) => {
+                const selectedDate = e.target.value;
+                if (selectedDate) {
+                    // Clear date range inputs when using date select
+                    if (dateFrom) dateFrom.value = '';
+                    if (dateTo) dateTo.value = '';
+                    this.filterByDate(selectedDate);
+                } else {
+                    this.clearDateFilter();
+                }
+            });
+        }
+        
+        if (applyRangeBtn) {
+            applyRangeBtn.addEventListener('click', () => {
+                const fromDate = dateFrom ? dateFrom.value : '';
+                const toDate = dateTo ? dateTo.value : '';
+                
+                if (fromDate || toDate) {
+                    // Clear date select when using range
+                    if (dateSelect) dateSelect.value = '';
+                    this.filterByDateRange(fromDate, toDate);
+                } else {
+                    this.clearDateFilter();
+                }
+            });
+        }
+        
+        // Also apply range on Enter key in date inputs
+        if (dateFrom) {
+            dateFrom.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    applyRangeBtn.click();
+                }
+            });
+        }
+        
+        if (dateTo) {
+            dateTo.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    applyRangeBtn.click();
+                }
+            });
+        }
+    }
+
+    /**
      * Refresh timeline data
      */
     async refresh() {
@@ -565,10 +766,28 @@ class TimelineApp {
             } else {
                 this.clearSearch();
             }
+        } else if (this.isDateFilterMode) {
+            // If in date filter mode, refresh the current filter
+            if (this.currentDateFilter) {
+                this.filterByDate(this.currentDateFilter);
+            } else {
+                // Check if date range is active
+                const dateFrom = document.getElementById('date-from');
+                const dateTo = document.getElementById('date-to');
+                if ((dateFrom && dateFrom.value) || (dateTo && dateTo.value)) {
+                    this.filterByDateRange(dateFrom.value, dateTo.value);
+                } else {
+                    await this.loadTimeline();
+                    await this.loadStats();
+                }
+            }
         } else {
             await this.loadTimeline();
             await this.loadStats();
         }
+        
+        // Always refresh available dates
+        await this.loadAvailableDates();
     }
 }
 

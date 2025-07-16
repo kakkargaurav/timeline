@@ -94,9 +94,15 @@ class TimelineManager
     /**
      * Get timeline data with images and captions
      */
-    public function getTimelineData()
+    public function getTimelineData($filters = [])
     {
         $images = $this->scanImages();
+        
+        // Apply date filters if provided
+        if (!empty($filters)) {
+            $images = $this->filterImagesByDate($images, $filters);
+        }
+        
         $timeline = [];
 
         foreach ($images as $image) {
@@ -110,6 +116,92 @@ class TimelineManager
         }
 
         return $timeline;
+    }
+
+    /**
+     * Filter images by date range
+     */
+    private function filterImagesByDate($images, $filters)
+    {
+        $filteredImages = [];
+        
+        foreach ($images as $image) {
+            $imageDate = $this->extractDateFromTimestamp($image['timestamp']);
+            
+            // Check date filters
+            if (isset($filters['date']) && !empty($filters['date'])) {
+                if ($imageDate !== $filters['date']) {
+                    continue;
+                }
+            }
+            
+            if (isset($filters['date_from']) && !empty($filters['date_from'])) {
+                if ($imageDate < $filters['date_from']) {
+                    continue;
+                }
+            }
+            
+            if (isset($filters['date_to']) && !empty($filters['date_to'])) {
+                if ($imageDate > $filters['date_to']) {
+                    continue;
+                }
+            }
+            
+            $filteredImages[] = $image;
+        }
+        
+        return $filteredImages;
+    }
+
+    /**
+     * Extract date (YYYY-MM-DD) from timestamp
+     */
+    private function extractDateFromTimestamp($timestamp)
+    {
+        if (preg_match('/(\d{4})(\d{2})(\d{2})_\d{6}/', $timestamp, $matches)) {
+            return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+        }
+        return null;
+    }
+
+    /**
+     * Get available dates in the timeline
+     */
+    public function getAvailableDates()
+    {
+        $images = $this->scanImages();
+        $dates = [];
+        
+        foreach ($images as $image) {
+            $date = $this->extractDateFromTimestamp($image['timestamp']);
+            if ($date && !in_array($date, $dates)) {
+                $dates[] = $date;
+            }
+        }
+        
+        // Sort dates in descending order (newest first)
+        rsort($dates);
+        
+        return $dates;
+    }
+
+    /**
+     * Get timeline data for a specific date
+     */
+    public function getTimelineDataByDate($date)
+    {
+        return $this->getTimelineData(['date' => $date]);
+    }
+
+    /**
+     * Get timeline data for a date range
+     */
+    public function getTimelineDataByDateRange($dateFrom, $dateTo)
+    {
+        return $this->getTimelineData([
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo
+        ]);
     }
 
     /**

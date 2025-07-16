@@ -51,6 +51,23 @@ Auth::protectWebPage();
                     </button>
                 </div>
                 
+                <!-- Date Filter Controls -->
+                <div class="date-filter-controls">
+                    <div class="date-filter-group">
+                        <label for="date-filter" class="date-label">📅 Filter by Date:</label>
+                        <select id="date-filter" class="date-select">
+                            <option value="">All Dates</option>
+                        </select>
+                    </div>
+                    <div class="date-range-group">
+                        <label for="date-from" class="date-label">From:</label>
+                        <input type="date" id="date-from" class="date-input">
+                        <label for="date-to" class="date-label">To:</label>
+                        <input type="date" id="date-to" class="date-input">
+                        <button id="apply-date-range" class="date-btn">Apply Range</button>
+                    </div>
+                </div>
+                
                 <div class="search-options">
                     <label class="search-checkbox">
                         <input type="checkbox" id="exact-match">
@@ -89,45 +106,7 @@ Auth::protectWebPage();
         
         <!-- Footer -->
         <footer style="text-align: center; margin-top: 40px; padding: 20px; color: rgba(255,255,255,0.7);">
-            <p>Timeline Application • Images are read from <code>images/driveway/</code> folder</p>
-            <p style="font-size: 0.9rem; margin-top: 10px;">
-                Expected filename format: <code>driveway_YYYYMMDD_HHMMSS.ext</code>
-            </p>
-            
-            <!-- API Usage Instructions -->
-            <details style="margin-top: 20px; text-align: left; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-                <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">🔧 API Usage</summary>
-                <div style="font-family: monospace; font-size: 0.85rem; line-height: 1.4;">
-                    <p><strong>Caption Management:</strong></p>
-                    <code>POST api/captions.php</code><br>
-                    <code>{"timestamp": "20250714_193205", "text": "Your caption here"}</code>
-                    
-                    <p style="margin-top: 15px;"><strong>Get Caption:</strong></p>
-                    <code>GET api/captions.php?timestamp=20250714_193205</code>
-                    
-                    <p style="margin-top: 15px;"><strong>Get All Captions:</strong></p>
-                    <code>GET api/captions.php</code>
-                    
-                    <p style="margin-top: 15px;"><strong>Delete Caption:</strong></p>
-                    <code>DELETE api/captions.php?timestamp=20250714_193205</code>
-                    
-                    <p style="margin-top: 15px;"><strong>Get Statistics:</strong></p>
-                    <code>GET api/captions.php?stats=1</code>
-                    
-                    <p style="margin-top: 15px;"><strong>🔍 Search Functions:</strong></p>
-                    <code>GET api/search.php?q=search_term</code>
-                    
-                    <p style="margin-top: 10px;"><strong>Search with Options:</strong></p>
-                    <code>GET api/search.php?q=term&exact=true&case=true&limit=20</code>
-                    
-                    <p style="margin-top: 10px;"><strong>Get Search Suggestions:</strong></p>
-                    <code>GET api/search.php?suggestions=1&q=partial_term</code>
-                    
-                    <p style="margin-top: 10px;"><strong>Advanced Search:</strong></p>
-                    <code>POST api/search.php</code><br>
-                    <code>{"advanced_search": true, "criteria": {"text": "term", "date_from": "20250701_000000"}}</code>
-                </div>
-            </details>
+            <p>Built with ❤️ for driveway monitoring</p>
         </footer>
     </div>
     

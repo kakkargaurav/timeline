@@ -21,6 +21,38 @@ body {
 
 /* Header Styles */
 .header {
+/* Date Filter Responsive Styles */
+@media (max-width: 768px) {
+    .date-filter-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .date-filter-group,
+    .date-range-group {
+        justify-content: center;
+    }
+    
+    .date-range-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .date-filter-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .date-select,
+    .date-input,
+    .date-btn {
+        width: 100%;
+    }
+}
     text-align: center;
     margin-bottom: 40px;
     color: white;
@@ -180,6 +212,96 @@ body {
 
 .clear-btn:hover {
     background: rgba(255,255,255,0.3);
+}
+
+/* Date Filter Controls */
+.date-filter-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.date-filter-group,
+.date-range-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.date-label {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.date-select,
+.date-input {
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.date-select:focus,
+.date-input:focus {
+    border-color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+}
+
+.date-select option {
+    background: #333;
+    color: white;
+}
+
+.date-btn {
+    padding: 8px 15px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.date-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.date-filter-indicator {
+    background: rgba(76, 175, 80, 0.8);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.date-filter-indicator .clear-date-filter {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    margin-left: 5px;
 }
 
 .search-options {

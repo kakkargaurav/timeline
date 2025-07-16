@@ -134,61 +134,12 @@ $csrfToken = Auth::generateCsrfToken();
             text-align: left;
         }
 
-        .info-box {
-            background: rgba(102, 126, 234, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-            border-left: 4px solid #667eea;
-        }
-
-        .info-box h3 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 1.1rem;
-        }
-
-        .info-box p {
-            color: #666;
-            font-size: 0.9rem;
-
-        <?php if (isset($_GET['logged_out'])): ?>
-            <div class="success-message" style="background: #e8f5e8; color: #2e7d32; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4CAF50; text-align: left;">
-                <strong>Logged Out:</strong> You have been successfully logged out.
-            </div>
-        <?php endif; ?>
-            line-height: 1.5;
-        }
-
-        .env-info {
-            font-family: monospace;
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-size: 0.85rem;
-            color: #444;
-        }
-
         .footer {
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #e0e0e0;
             color: #888;
             font-size: 0.9rem;
-        }
-
-        .api-note {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border-left: 4px solid #4CAF50;
-            text-align: left;
-        }
-
-        .api-note strong {
-            color: #2e7d32;
         }
 
         @media (max-width: 480px) {
@@ -236,20 +187,12 @@ $csrfToken = Auth::generateCsrfToken();
                 🚀 Login to Timeline
             </button>
         </form>
-
-        <div class="api-note">
-            <strong>📡 API Access:</strong> All API endpoints remain publicly accessible for third-party integrations.
-        </div>
-
-        <div class="info-box">
-            <h3>🔧 Configuration</h3>
-            <p>Login credentials are configured via environment variables:</p>
-            <div class="env-info">
-                APP_USER=your_username<br>
-                APP_PASS=your_password
+        <?php if (isset($_GET['logged_out'])): ?>
+            <div style="background: #e8f5e8; color: #2e7d32; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #4CAF50; text-align: left;">
+                <strong>Logged Out:</strong> You have been successfully logged out.
             </div>
-            <p>Default credentials: admin / password</p>
-        </div>
+        <?php endif; ?>
+
 
         <div class="footer">
             <p>🏠 <a href="index.php" style="color: #667eea; text-decoration: none;">Back to Timeline</a></p>
