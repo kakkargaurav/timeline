@@ -15,6 +15,7 @@ class TimelineApp {
         this.isDateFilterMode = false;
         this.currentDateFilter = null;
         this.searchTimeout = null;
+        this.currentFolder = 'driveway'; // Default folder
         this.init();
     }
 
@@ -34,13 +35,25 @@ class TimelineApp {
     }
 
     /**
+     * Set current folder
+     */
+    setFolder(folderName) {
+        this.currentFolder = folderName;
+        // Reload data for the new folder
+        this.loadTimeline();
+        this.loadStats();
+        this.loadAvailableDates();
+    }
+
+    /**
      * Load timeline data from server
      */
     async loadTimeline() {
         try {
             this.showLoading();
             
-            const response = await fetch('get_timeline.php');
+            const url = `get_timeline.php?folder=${encodeURIComponent(this.currentFolder)}`;
+            const response = await fetch(url);
             const result = await response.json();
             
             if (result.success) {
@@ -61,7 +74,8 @@ class TimelineApp {
      */
     async loadStats() {
         try {
-            const response = await fetch(this.apiBaseUrl + '?stats=1');
+            const url = `${this.apiBaseUrl}?stats=1&folder=${encodeURIComponent(this.currentFolder)}`;
+            const response = await fetch(url);
             const result = await response.json();
             
             if (result.success) {
@@ -288,7 +302,8 @@ class TimelineApp {
                 exact: options.exact_match || false,
                 case: options.case_sensitive || false,
                 limit: options.limit || 50,
-                offset: options.offset || 0
+                offset: options.offset || 0,
+                folder: this.currentFolder
             });
 
             const response = await fetch(`${this.searchApiUrl}?${params}`);
@@ -504,7 +519,8 @@ class TimelineApp {
      */
     async loadAvailableDates() {
         try {
-            const response = await fetch(`${this.timelineApiUrl}?available_dates=1`);
+            const url = `${this.timelineApiUrl}?available_dates=1&folder=${encodeURIComponent(this.currentFolder)}`;
+            const response = await fetch(url);
             const result = await response.json();
             
             if (result.success) {
@@ -562,9 +578,13 @@ class TimelineApp {
             this.currentDateFilter = date;
             
             let url = this.timelineApiUrl;
+            const params = new URLSearchParams({
+                folder: this.currentFolder
+            });
             if (date) {
-                url += `?date=${encodeURIComponent(date)}`;
+                params.append('date', date);
             }
+            url += `?${params}`;
             
             const response = await fetch(url);
             const result = await response.json();
@@ -591,7 +611,9 @@ class TimelineApp {
             this.showLoading();
             this.isDateFilterMode = true;
             
-            const params = new URLSearchParams();
+            const params = new URLSearchParams({
+                folder: this.currentFolder
+            });
             if (dateFrom) params.append('date_from', dateFrom);
             if (dateTo) params.append('date_to', dateTo);
             

@@ -11,11 +11,16 @@ class TimelineManager
 {
     private $db;
     private $imagesPath;
+    private $folderName;
 
     public function __construct($imagesPath = 'images/driveway')
     {
         $this->db = new Database();
         $this->imagesPath = $imagesPath;
+        
+        // Extract folder name from path for database queries
+        $pathParts = explode('/', $this->imagesPath);
+        $this->folderName = end($pathParts);
     }
 
     /**
@@ -31,8 +36,28 @@ class TimelineManager
             mkdir($basePath, 0755, true);
         }
 
-        // Scan for image files
-        $files = glob($basePath . '/driveway_*.*');
+        // Scan for image files - support multiple patterns
+        $patterns = [
+            $basePath . '/' . $this->folderName . '_*.*',  // folder_YYYYMMDD_HHMMSS.ext
+            $basePath . '/*_*.*',                           // any_YYYYMMDD_HHMMSS.ext
+            $basePath . '/*.*'                              // all image files
+        ];
+        
+        $files = [];
+        foreach ($patterns as $pattern) {
+            $matchedFiles = glob($pattern);
+            if ($matchedFiles) {
+                $files = array_merge($files, $matchedFiles);
+            }
+        }
+        
+        // Remove duplicates and filter to only image files
+        $files = array_unique($files);
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $files = array_filter($files, function($file) use ($imageExtensions) {
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            return in_array($ext, $imageExtensions) && is_file($file);
+        });
         
         foreach ($files as $file) {
             $filename = basename($file);
@@ -63,9 +88,21 @@ class TimelineManager
      */
     private function extractTimestamp($filename)
     {
-        if (preg_match('/driveway_(\d{8}_\d{6})/', $filename, $matches)) {
+        // Pattern: foldername_20250714_193205 (any folder name)
+        if (preg_match('/\w+_(\d{8}_\d{6})/', $filename, $matches)) {
             return $matches[1];
         }
+        
+        // Pattern: just timestamp 20250714_193205
+        if (preg_match('/^(\d{8}_\d{6})/', $filename, $matches)) {
+            return $matches[1];
+        }
+        
+        // Pattern: IMG_20250714_193205 or similar
+        if (preg_match('/(\d{8}_\d{6})/', $filename, $matches)) {
+            return $matches[1];
+        }
+        
         return null;
     }
 
@@ -211,8 +248,8 @@ class TimelineManager
     {
         try {
             $result = $this->db->fetch(
-                "SELECT * FROM captions WHERE timestamp = ?",
-                [$timestamp]
+                "SELECT * FROM captions WHERE timestamp = ? AND folder_name = ?",
+                [$timestamp, $this->folderName]
             );
             return $result ?: ['text' => '', 'created_at' => null];
         } catch (Exception $e) {
@@ -227,7 +264,8 @@ class TimelineManager
     {
         try {
             return $this->db->fetchAll(
-                "SELECT * FROM captions ORDER BY timestamp DESC"
+                "SELECT * FROM captions WHERE folder_name = ? ORDER BY timestamp DESC",
+                [$this->folderName]
             );
         } catch (Exception $e) {
             return [];
@@ -240,23 +278,23 @@ class TimelineManager
     public function saveCaption($timestamp, $text)
     {
         try {
-            // Check if caption exists
+            // Check if caption exists for this folder
             $existing = $this->db->fetch(
-                "SELECT id FROM captions WHERE timestamp = ?",
-                [$timestamp]
+                "SELECT id FROM captions WHERE timestamp = ? AND folder_name = ?",
+                [$timestamp, $this->folderName]
             );
 
             if ($existing) {
                 // Update existing caption
                 $this->db->query(
-                    "UPDATE captions SET text = ?, updated_at = CURRENT_TIMESTAMP WHERE timestamp = ?",
-                    [$text, $timestamp]
+                    "UPDATE captions SET text = ?, updated_at = CURRENT_TIMESTAMP WHERE timestamp = ? AND folder_name = ?",
+                    [$text, $timestamp, $this->folderName]
                 );
             } else {
-                // Insert new caption
+                // Insert new caption with folder name
                 $this->db->insert(
-                    "INSERT INTO captions (timestamp, text) VALUES (?, ?)",
-                    [$timestamp, $text]
+                    "INSERT INTO captions (timestamp, text, folder_name) VALUES (?, ?, ?)",
+                    [$timestamp, $text, $this->folderName]
                 );
             }
             
@@ -273,8 +311,8 @@ class TimelineManager
     {
         try {
             $rowCount = $this->db->rowCount(
-                "DELETE FROM captions WHERE timestamp = ?",
-                [$timestamp]
+                "DELETE FROM captions WHERE timestamp = ? AND folder_name = ?",
+                [$timestamp, $this->folderName]
             );
             return $rowCount > 0;
         } catch (Exception $e) {
@@ -315,7 +353,8 @@ class TimelineManager
                 $searchParams = ['%' . $searchTerm . '%'];
             }
             
-            $sql = "SELECT * FROM captions WHERE {$searchCondition} ORDER BY timestamp DESC";
+            $sql = "SELECT * FROM captions WHERE folder_name = ? AND {$searchCondition} ORDER BY timestamp DESC";
+            array_unshift($searchParams, $this->folderName);
             
             if ($options['limit'] > 0) {
                 $sql .= " LIMIT " . intval($options['limit']);
@@ -411,11 +450,11 @@ class TimelineManager
             }
             
             $sql = "SELECT DISTINCT text FROM captions
-                    WHERE LOWER(text) LIKE LOWER(?)
+                    WHERE folder_name = ? AND LOWER(text) LIKE LOWER(?)
                     ORDER BY LENGTH(text), text
                     LIMIT ?";
             
-            $results = $this->db->fetchAll($sql, ['%' . $searchTerm . '%', $limit]);
+            $results = $this->db->fetchAll($sql, [$this->folderName, '%' . $searchTerm . '%', $limit]);
             
             return array_map(function($row) {
                 return $row['text'];
@@ -434,12 +473,12 @@ class TimelineManager
         try {
             $sql = "SELECT text, COUNT(*) as frequency
                     FROM captions
-                    WHERE text != ''
+                    WHERE folder_name = ? AND text != ''
                     GROUP BY text
                     ORDER BY frequency DESC, text
                     LIMIT ?";
             
-            return $this->db->fetchAll($sql, [$limit]);
+            return $this->db->fetchAll($sql, [$this->folderName, $limit]);
             
         } catch (Exception $e) {
             return [];
@@ -452,8 +491,8 @@ class TimelineManager
     public function advancedSearch($criteria)
     {
         try {
-            $conditions = [];
-            $params = [];
+            $conditions = ["folder_name = ?"];
+            $params = [$this->folderName];
             
             // Text search
             if (!empty($criteria['text'])) {
@@ -478,7 +517,8 @@ class TimelineManager
                 $params[] = intval($criteria['min_length']);
             }
             
-            if (empty($conditions)) {
+            if (count($conditions) <= 1) {
+                // Only folder condition, no actual search criteria
                 return [];
             }
             

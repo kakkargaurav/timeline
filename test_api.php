@@ -39,12 +39,35 @@ header('Content-Type: text/html; charset=UTF-8');
     <div class="container">
         <h1>🧪 Timeline API Tester</h1>
         <p>Use this page to test the timeline API endpoints without needing external tools.</p>
+        
+        <div style="margin: 20px 0; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <p><strong>📁 Multi-Folder Support:</strong> This tester now supports folder-based captions!</p>
+            <p>
+                <a href="index.php" style="color: #1976d2;">← Back to Timeline Hub</a> |
+                <a href="migrate_database.php" style="color: #1976d2;">🔧 Database Migration</a> |
+                <a href="test_folders.php" style="color: #1976d2;">📁 Test Folders</a>
+            </p>
+        </div>
 
         <!-- Test Database Connection -->
         <div class="test-section">
             <h3>🔗 Test Database Connection</h3>
             <button onclick="testConnection()">Test Connection</button>
             <div id="connection-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Folder Selection -->
+        <div class="test-section">
+            <h3>📁 Folder Selection</h3>
+            <div class="form-group">
+                <label for="test-folder">Current Folder:</label>
+                <select id="test-folder">
+                    <option value="driveway">Driveway</option>
+                    <option value="front">Front</option>
+                    <option value="garden">Garden</option>
+                </select>
+            </div>
+            <p><em>All API tests will use the selected folder</em></p>
         </div>
 
         <!-- Add Caption -->
@@ -137,6 +160,11 @@ header('Content-Type: text/html; charset=UTF-8');
     </div>
 
     <script>
+        // Get current folder
+        function getCurrentFolder() {
+            return document.getElementById('test-folder').value;
+        }
+
         // Test database connection
         async function testConnection() {
             const resultDiv = document.getElementById('connection-result');
@@ -146,11 +174,12 @@ header('Content-Type: text/html; charset=UTF-8');
 
             try {
                 // Try to get stats as a connection test
-                const response = await fetch('api/captions.php?stats=1');
+                const folder = getCurrentFolder();
+                const response = await fetch(`api/captions.php?stats=1&folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    resultDiv.textContent = 'Database connection successful!\n' + JSON.stringify(result, null, 2);
+                    resultDiv.textContent = `Database connection successful for ${folder} folder!\n` + JSON.stringify(result, null, 2);
                     resultDiv.className = 'result success';
                 } else {
                     resultDiv.textContent = 'Connection test failed:\n' + JSON.stringify(result, null, 2);
@@ -166,17 +195,18 @@ header('Content-Type: text/html; charset=UTF-8');
         async function addCaption() {
             const timestamp = document.getElementById('add-timestamp').value;
             const text = document.getElementById('add-text').value;
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('add-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Adding caption...';
+            resultDiv.textContent = `Adding caption to ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
                 const response = await fetch('api/captions.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ timestamp, text })
+                    body: JSON.stringify({ timestamp, text, folder })
                 });
                 
                 const result = await response.json();
@@ -191,14 +221,15 @@ header('Content-Type: text/html; charset=UTF-8');
         // Get specific caption
         async function getCaption() {
             const timestamp = document.getElementById('get-timestamp').value;
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('get-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Getting caption...';
+            resultDiv.textContent = `Getting caption from ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch(`api/captions.php?timestamp=${encodeURIComponent(timestamp)}`);
+                const response = await fetch(`api/captions.php?timestamp=${encodeURIComponent(timestamp)}&folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
                 resultDiv.className = result.success ? 'result success' : 'result error';
@@ -210,14 +241,15 @@ header('Content-Type: text/html; charset=UTF-8');
 
         // Get all captions
         async function getAllCaptions() {
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('getall-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Getting all captions...';
+            resultDiv.textContent = `Getting all captions from ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch('api/captions.php');
+                const response = await fetch(`api/captions.php?folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
                 resultDiv.className = result.success ? 'result success' : 'result error';
@@ -229,14 +261,15 @@ header('Content-Type: text/html; charset=UTF-8');
 
         // Get statistics
         async function getStats() {
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('stats-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Getting statistics...';
+            resultDiv.textContent = `Getting statistics for ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch('api/captions.php?stats=1');
+                const response = await fetch(`api/captions.php?stats=1&folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
                 resultDiv.className = result.success ? 'result success' : 'result error';
@@ -248,14 +281,15 @@ header('Content-Type: text/html; charset=UTF-8');
 
         // Get timeline data
         async function getTimeline() {
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('timeline-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Getting timeline data...';
+            resultDiv.textContent = `Getting timeline data for ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch('get_timeline.php');
+                const response = await fetch(`get_timeline.php?folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
                 resultDiv.className = result.success ? 'result success' : 'result error';
@@ -268,33 +302,41 @@ header('Content-Type: text/html; charset=UTF-8');
         // Delete caption
         async function deleteCaption() {
             const timestamp = document.getElementById('delete-timestamp').value;
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('delete-result');
             
-            if (!confirm('Are you sure you want to delete this caption?')) {
+            if (!confirm(`Are you sure you want to delete this caption from ${folder} folder?`)) {
                 return;
             }
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Deleting caption...';
+            resultDiv.textContent = `Deleting caption from ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch(`api/captions.php?timestamp=${encodeURIComponent(timestamp)}`, {
+                const response = await fetch(`api/captions.php?timestamp=${encodeURIComponent(timestamp)}&folder=${encodeURIComponent(folder)}`, {
                     method: 'DELETE'
                 });
                 
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
+                resultDiv.className = result.success ? 'result success' : 'result error';
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
 
         // Search captions
         async function searchCaptions() {
             const searchTerm = document.getElementById('search-term').value;
             const exactMatch = document.getElementById('search-exact').checked;
             const caseSensitive = document.getElementById('search-case').checked;
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('search-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Searching captions...';
+            resultDiv.textContent = `Searching captions in ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
@@ -302,7 +344,8 @@ header('Content-Type: text/html; charset=UTF-8');
                     q: searchTerm,
                     exact: exactMatch,
                     case: caseSensitive,
-                    limit: 20
+                    limit: 20,
+                    folder: folder
                 });
 
                 const response = await fetch(`api/search.php?${params}`);
@@ -318,22 +361,17 @@ header('Content-Type: text/html; charset=UTF-8');
         // Get search suggestions
         async function getSearchSuggestions() {
             const searchTerm = document.getElementById('suggestion-term').value;
+            const folder = getCurrentFolder();
             const resultDiv = document.getElementById('suggestions-result');
             
             resultDiv.style.display = 'block';
-            resultDiv.textContent = 'Getting suggestions...';
+            resultDiv.textContent = `Getting suggestions from ${folder} folder...`;
             resultDiv.className = 'result info';
 
             try {
-                const response = await fetch(`api/search.php?suggestions=1&q=${encodeURIComponent(searchTerm)}&limit=10`);
+                const response = await fetch(`api/search.php?suggestions=1&q=${encodeURIComponent(searchTerm)}&limit=10&folder=${encodeURIComponent(folder)}`);
                 const result = await response.json();
                 resultDiv.textContent = JSON.stringify(result, null, 2);
-                resultDiv.className = result.success ? 'result success' : 'result error';
-            } catch (error) {
-                resultDiv.textContent = 'Error: ' + error.message;
-                resultDiv.className = 'result error';
-            }
-        }
                 resultDiv.className = result.success ? 'result success' : 'result error';
             } catch (error) {
                 resultDiv.textContent = 'Error: ' + error.message;

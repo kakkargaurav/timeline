@@ -14,23 +14,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../classes/TimelineManager.php';
 
 try {
-    $timeline = new TimelineManager();
     $method = $_SERVER['REQUEST_METHOD'];
     
     switch ($method) {
         case 'GET':
+            // Get folder parameter for GET requests
+            $folder = $_GET['folder'] ?? 'driveway';
+            $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder);
+            $timeline = new TimelineManager('images/' . $folder);
             handleGet($timeline);
             break;
             
         case 'POST':
-            handlePost($timeline);
+            handlePost();
             break;
             
         case 'PUT':
-            handlePut($timeline);
+            handlePut();
             break;
             
         case 'DELETE':
+            // Get folder parameter for DELETE requests
+            $folder = $_GET['folder'] ?? 'driveway';
+            $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder);
+            $timeline = new TimelineManager('images/' . $folder);
             handleDelete($timeline);
             break;
             
@@ -75,7 +82,7 @@ function handleGet($timeline)
 /**
  * Handle POST requests - Create new caption
  */
-function handlePost($timeline)
+function handlePost()
 {
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -87,6 +94,13 @@ function handlePost($timeline)
     
     $timestamp = trim($input['timestamp']);
     $text = trim($input['text']);
+    
+    // Get folder parameter from JSON body, default to 'driveway'
+    $folder = $input['folder'] ?? 'driveway';
+    $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder); // Sanitize folder name
+    
+    // Create timeline manager for the specified folder
+    $timeline = new TimelineManager('images/' . $folder);
     
     // Validate timestamp format (YYYYMMDD_HHMMSS)
     if (!preg_match('/^\d{8}_\d{6}$/', $timestamp)) {
@@ -98,9 +112,13 @@ function handlePost($timeline)
     try {
         $timeline->saveCaption($timestamp, $text);
         echo json_encode([
-            'success' => true, 
+            'success' => true,
             'message' => 'Caption saved successfully',
-            'data' => ['timestamp' => $timestamp, 'text' => $text]
+            'data' => [
+                'timestamp' => $timestamp,
+                'text' => $text,
+                'folder' => $folder
+            ]
         ]);
     } catch (Exception $e) {
         http_response_code(500);
@@ -111,7 +129,7 @@ function handlePost($timeline)
 /**
  * Handle PUT requests - Update existing caption
  */
-function handlePut($timeline)
+function handlePut()
 {
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -124,12 +142,23 @@ function handlePut($timeline)
     $timestamp = trim($input['timestamp']);
     $text = trim($input['text']);
     
+    // Get folder parameter from JSON body, default to 'driveway'
+    $folder = $input['folder'] ?? 'driveway';
+    $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder); // Sanitize folder name
+    
+    // Create timeline manager for the specified folder
+    $timeline = new TimelineManager('images/' . $folder);
+    
     try {
         $timeline->saveCaption($timestamp, $text);
         echo json_encode([
-            'success' => true, 
+            'success' => true,
             'message' => 'Caption updated successfully',
-            'data' => ['timestamp' => $timestamp, 'text' => $text]
+            'data' => [
+                'timestamp' => $timestamp,
+                'text' => $text,
+                'folder' => $folder
+            ]
         ]);
     } catch (Exception $e) {
         http_response_code(500);

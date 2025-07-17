@@ -14,7 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../classes/TimelineManager.php';
 
 try {
-    $timeline = new TimelineManager();
+    // Get folder parameter
+    $folder = $_GET['folder'] ?? 'driveway';
+    $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder); // Sanitize folder name
+    
+    $timeline = new TimelineManager('images/' . $folder);
     
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if (isset($_GET['available_dates'])) {
@@ -23,7 +27,8 @@ try {
             echo json_encode([
                 'success' => true,
                 'data' => $dates,
-                'count' => count($dates)
+                'count' => count($dates),
+                'folder' => $folder
             ]);
             
         } elseif (isset($_GET['date'])) {
@@ -35,7 +40,8 @@ try {
                 'success' => true,
                 'data' => $timelineData,
                 'count' => count($timelineData),
-                'filter' => ['date' => $date]
+                'filter' => ['date' => $date],
+                'folder' => $folder
             ]);
             
         } elseif (isset($_GET['date_from']) || isset($_GET['date_to'])) {
@@ -53,7 +59,8 @@ try {
                 'success' => true,
                 'data' => $timelineData,
                 'count' => count($timelineData),
-                'filter' => $filters
+                'filter' => $filters,
+                'folder' => $folder
             ]);
             
         } else {
@@ -63,7 +70,8 @@ try {
             echo json_encode([
                 'success' => true,
                 'data' => $timelineData,
-                'count' => count($timelineData)
+                'count' => count($timelineData),
+                'folder' => $folder
             ]);
         }
     } else {
