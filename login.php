@@ -195,7 +195,7 @@ $csrfToken = Auth::generateCsrfToken();
 
 
         <div class="footer">
-            <p>🏠 <a href="index.php" style="color: #667eea; text-decoration: none;">Back to Timeline</a></p>
+            <p>🏠 <a href="index.php" style="color: #667eea; text-decoration: none;">Back to Timeline Hub</a></p>
             <p style="margin-top: 10px;">Secure access to timeline management</p>
         </div>
     </div>

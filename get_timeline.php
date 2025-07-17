@@ -6,7 +6,11 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/classes/TimelineManager.php';
 
 try {
-    $timeline = new TimelineManager();
+    // Get folder parameter
+    $folder = $_GET['folder'] ?? 'driveway';
+    $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder); // Sanitize folder name
+    
+    $timeline = new TimelineManager('images/' . $folder);
     
     // Check for date filters
     $filters = [];
