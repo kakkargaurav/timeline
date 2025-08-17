@@ -251,6 +251,12 @@ class TimelineManager
                 "SELECT * FROM captions WHERE timestamp = ? AND folder_name = ?",
                 [$timestamp, $this->folderName]
             );
+            
+            if ($result && !empty($result['text'])) {
+                // URL decode the caption text to handle encoded characters
+                $result['text'] = urldecode($result['text']);
+            }
+            
             return $result ?: ['text' => '', 'created_at' => null];
         } catch (Exception $e) {
             return ['text' => '', 'created_at' => null];
@@ -263,10 +269,19 @@ class TimelineManager
     public function getAllCaptions()
     {
         try {
-            return $this->db->fetchAll(
+            $captions = $this->db->fetchAll(
                 "SELECT * FROM captions WHERE folder_name = ? ORDER BY timestamp DESC",
                 [$this->folderName]
             );
+            
+            // URL decode all caption texts
+            foreach ($captions as &$caption) {
+                if (!empty($caption['text'])) {
+                    $caption['text'] = urldecode($caption['text']);
+                }
+            }
+            
+            return $captions;
         } catch (Exception $e) {
             return [];
         }
@@ -365,6 +380,13 @@ class TimelineManager
             
             $matchingCaptions = $this->db->fetchAll($sql, $searchParams);
             
+            // URL decode caption texts
+            foreach ($matchingCaptions as &$caption) {
+                if (!empty($caption['text'])) {
+                    $caption['text'] = urldecode($caption['text']);
+                }
+            }
+            
             // Get all images for matching
             $allImages = $this->scanImages();
             $imagesByTimestamp = [];
@@ -457,7 +479,7 @@ class TimelineManager
             $results = $this->db->fetchAll($sql, [$this->folderName, '%' . $searchTerm . '%', $limit]);
             
             return array_map(function($row) {
-                return $row['text'];
+                return urldecode($row['text']);
             }, $results);
             
         } catch (Exception $e) {
@@ -529,6 +551,13 @@ class TimelineManager
             }
             
             $matchingCaptions = $this->db->fetchAll($sql, $params);
+            
+            // URL decode caption texts
+            foreach ($matchingCaptions as &$caption) {
+                if (!empty($caption['text'])) {
+                    $caption['text'] = urldecode($caption['text']);
+                }
+            }
             
             // Convert to timeline format
             $allImages = $this->scanImages();

@@ -63,6 +63,8 @@ function handleGet($timeline)
         $caption = $timeline->getCaption($timestamp);
         
         if ($caption && !empty($caption['text'])) {
+            // URL decode the caption text to handle encoded characters
+            $caption['text'] = urldecode($caption['text']);
             echo json_encode(['success' => true, 'data' => $caption]);
         } else {
             http_response_code(404);
@@ -75,6 +77,7 @@ function handleGet($timeline)
     } else {
         // Get all captions
         $captions = $timeline->getAllCaptions();
+        // URL decoding is already handled in TimelineManager::getAllCaptions()
         echo json_encode(['success' => true, 'data' => $captions]);
     }
 }
